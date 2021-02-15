@@ -1,0 +1,45 @@
+channels:
+- omnia
+- conda-forge
+- defaults
+dependencies:
+- mdtraj
+- numpy==1.19.*
+- openmm
+- pdbfixer
+- pip==20.2.*
+- rdkit
+- pip:
+  - -f https://download.pytorch.org/whl/torch_stable.html
+  - -f https://pytorch-geometric.com/whl/torch-1.6.0+cpu.html
+  - biopython
+  - dgl==0.5.*
+  - dgllife==0.2.*
+  - flake8
+  - flaky
+  - git+https://github.com/samoturk/mol2vec
+  - lightgbm==3.*
+  - matminer
+  - mordred
+  - mypy
+  - networkx
+  - pillow
+  - pubchempy
+  - pyGPGO
+  - pymatgen==2020.12.31
+  - pytest
+  - pytest-cov
+  - simdna
+  - tensorflow==2.3.*
+  - tensorflow_probability==0.11.*
+  - torch-cluster
+  - torch-geometric==1.6.*
+  - torch-scatter
+  - torch-sparse
+  - torch-spline-conv
+  - torch==1.6.0+cpu
+  - torchvision==0.7.0+cpu
+  - transformers==3.5.*
+  - xgboost==1.*
+  - yapf==0.22.0
+name: aai_cpu
