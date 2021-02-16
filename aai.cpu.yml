@@ -1,14 +1,19 @@
+name: aai_cpu
 channels:
 - omnia
 - conda-forge
 - defaults
 dependencies:
+- python==3.6.*
 - mdtraj
 - numpy==1.19.*
 - openmm
 - pdbfixer
 - pip==20.2.*
+- pymatgen==2020.12.31
 - rdkit
+- fastapi
+- uvicorn
 - pip:
   - -f https://download.pytorch.org/whl/torch_stable.html
   - -f https://pytorch-geometric.com/whl/torch-1.6.0+cpu.html
@@ -26,7 +31,6 @@ dependencies:
   - pillow
   - pubchempy
   - pyGPGO
-  - pymatgen==2020.12.31
   - pytest
   - pytest-cov
   - simdna
@@ -42,4 +46,3 @@ dependencies:
   - transformers==3.5.*
   - xgboost==1.*
   - yapf==0.22.0
-name: aai_cpu
