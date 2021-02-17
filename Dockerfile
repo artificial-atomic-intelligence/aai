@@ -16,6 +16,6 @@ SHELL ["conda", "run", "-n", "aai_cpu", "/bin/bash", "-c"]
 RUN pip install .
 
 COPY main.py .
-EXPOSE 8080
+EXPOSE 8000
 
 ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "aai_cpu", "python", "main.py"]
