@@ -20,6 +20,7 @@ dependencies:
   - biopython
   - dgl==0.5.*
   - dgllife==0.2.*
+  - click
   - flake8
   - flaky
   - git+https://github.com/samoturk/mol2vec
