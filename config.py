@@ -1,6 +1,6 @@
 MODEL_PATH = "./models/"
 
-STYLES = {
+METHODS = {
     "candy": "candy",
     "composition 6": "composition_vii",
     "feathers": "feathers",

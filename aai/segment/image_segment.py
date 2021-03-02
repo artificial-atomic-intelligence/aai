@@ -121,15 +121,16 @@ def binary_segment(image, sigma=0.1, image_type='dark_field', algo='bimodal'):
 
 
 def watershed_segment(image, thresh):
+    image = np.array(image.convert('P'))  # 8-bit pixels
 
-    image = skimage.filters.gaussian(image, sigma=0.1)
+    image = skimage.filters.gaussian(image, sigma=0.1, )
 
     denoised = rank.median(image, disk(5))
     # find continuous region (low gradient -
     # where less than 10 for this image) --> markers
     # disk(5) is used here to get a more smooth image
-    plt.imshow(denoised, cmap=plt.cm.gray)
-    plt.show()
+    # plt.imshow(denoised, cmap=plt.cm.gray)
+    # plt.show()
     markers = rank.gradient(denoised, disk(5)) < thresh
     markers = ndi.label(markers)[0]
 

@@ -82,4 +82,4 @@ def blur_im(image, sigma: int = 3):
 
     """
 
-    return filters.gaussian(image, sigma)
+    return filters.gaussian(image, sigma, multichannel=True)

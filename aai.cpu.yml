@@ -32,6 +32,7 @@ dependencies:
   - pillow
   - pubchempy
   - pyGPGO
+  - python-multipart
   - pytest
   - pytest-cov
   - simdna
