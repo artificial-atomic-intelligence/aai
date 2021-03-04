@@ -1,0 +1,30 @@
+version: '3.7'
+
+services:
+  feat:
+    build: ./feat
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    volumes:
+      - ./feat/:/app/
+    ports:
+      - 8001:8000
+
+  io:
+    build: ./io
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    volumes:
+      - ./io/:/app/
+    ports:
+      - 8002:8000
+
+  segment:
+    build: ./segment
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    volumes:
+      - ./segment/:/app/
+    ports:
+      - 8003:8000
+
+  server:
+    build 
+  

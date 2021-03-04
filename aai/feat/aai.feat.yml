@@ -1,20 +1,17 @@
-name: aai_cpu
+name: aai_feat
 channels:
 - omnia
 - conda-forge
 - defaults
 dependencies:
-- python==3.7.*
+- python==3.6.*
 - numpy==1.19.*
-- scikit-image
-- scikit-learn
 - openmm
-- python-multipart
 - pdbfixer
 - pip==20.2.*
+- pymatgen==2020.12.31
 - rdkit
 - fastapi
 - uvicorn
-- pymatgen==2020.4.29
 - pip:
-   - -r requirements.cpu.txt
+  - matminer
