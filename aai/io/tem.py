@@ -43,7 +43,7 @@ class TEMDataset(Dataset):
         self.file_types = uniq([i.split('.') for i in self.filenames])
 
         if filestreams is not None:
-            if len(filestreams) != len(filestreams):
+            if len(filenames) != len(filestreams):
                 print('need same number of file names and streams')
                 sys.exit()
 
@@ -64,6 +64,7 @@ class TEMDataset(Dataset):
 
     def __getitem__(self, idx):
 
+        # ensure that everything returned in metadata is directly json serializable
         ext = self.filenames[idx].split('.')[-1]
 
         if ext == 'dm3':
@@ -91,12 +92,13 @@ class TEMDataset(Dataset):
             # print(dm3f.cuts)
 
         elif ext == 'jpg' or ext == 'png':
-
-            img = np.array(Image.open(self.filenames[idx]))
+            if self.filestreams is None:
+                img = np.array(Image.open(self.filenames[idx]))
+            else:
+                img = np.array(Image.open(self.filestreams[idx]))            
 
             metadata = self.metadata
-
-            metadata['cuts'] = (np.amin(img), np.amax(img))
+            metadata['cuts'] = (float(np.amin(img)), float(np.amax(img)))
 
         else:
 

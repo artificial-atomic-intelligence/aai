@@ -16,5 +16,6 @@ dependencies:
 - fastapi
 - uvicorn
 - pymatgen==2020.4.29
+- boto3
 - pip:
    - -r requirements.cpu.txt
