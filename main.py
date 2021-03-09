@@ -9,6 +9,7 @@ from PIL import Image
 import json
 
 import config
+import boto3
 
 from aai.feat.material import featurize_composition
 from aai.feat.molecule import featurize_molecule, pubchem_cid_to_mol, pdb_id_to_mol
@@ -64,6 +65,17 @@ def get_image(method: str, file: UploadFile = File(...)):
     name = f"/storage/{str(uuid.uuid4())}.png"
     # im.save(name)
     return {"name": name, "image_json": image_json}  # im
+
+@app.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    try:
+        object_name = f"{str(uuid.uuid4())}.png"
+        s3 = boto3.resource('s3')
+        bucket_name = 'aai-test-company'
+        s3.Bucket(bucket_name).put_object(Key=object_name, Body=file.file.read())
+        return 'Uploading complete...'
+    except Exception as e:
+        return e
 
 
 if __name__ == "__main__":
