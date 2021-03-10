@@ -85,7 +85,10 @@ class TEMDataset(Dataset):
             metadata['cuts'] = dm3f.cuts
 
             img = np.clip(dm3f.imagedata, metadata['cuts'][0], metadata['cuts'][1])
-
+            # convert to RGB
+            # img = np.dstack((img, img, img))
+            # print('dm3')
+            # print(img.shape)
             # print(type(img))
             # print(np.amax(img))
             # print(np.amin(img))
@@ -93,9 +96,13 @@ class TEMDataset(Dataset):
 
         elif ext == 'jpg' or ext == 'png':
             if self.filestreams is None:
-                img = np.array(Image.open(self.filenames[idx]))
+                img = np.array(Image.open(self.filenames[idx]).convert('L'))
+                # print('jpg1')
+                # print(img.shape)
             else:
-                img = np.array(Image.open(self.filestreams[idx]))            
+                img = np.array(Image.open(self.filestreams[idx]).convert('L'))   
+                # print('jpg2')
+                # print(img.shape)         
 
             metadata = self.metadata
             metadata['cuts'] = (float(np.amin(img)), float(np.amax(img)))

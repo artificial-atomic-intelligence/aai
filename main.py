@@ -103,6 +103,7 @@ def get_tem_image(seg_method: str, dest: S3dest):
     
     # normalize segmented image
     im_overlay = normalize_im(im_overlay)
+    im_array = normalize_im(im_array)
 
     ## json outputs
     # segmented image
