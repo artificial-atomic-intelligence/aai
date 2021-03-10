@@ -503,11 +503,13 @@ class DM3(object):
             self._f = open(self._filename, 'rb')
             # print(type(self._f))
         elif filestream is not None:
-            print(type(filestream))
-            print(filestream[:200])
+            # print(type(filestream))
+            # print(filestream[:200])
             # print(type(base64.b64decode(filestream)))
             # print(type(base64.decodebytes(filestream)))
-            self._f = io.BytesIO(base64.b64decode(filestream))
+            
+            # self._f = io.BytesIO(base64.b64decode(filestream))
+            self._f = filestream
         else:
             print('no filename or filestream specified')
             sys.exit()

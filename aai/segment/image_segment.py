@@ -29,6 +29,7 @@ from skimage.segmentation import clear_border, watershed
 from skimage.measure import label, regionprops
 from skimage.morphology import closing, square, disk
 from skimage.color import label2rgb
+from skimage.util import img_as_ubyte
 
 from PIL import Image as pimage
 from PIL import ImageFile
@@ -36,6 +37,13 @@ from io import BytesIO
 
 from aai.segment.autoencoder import AutoencoderBottle
 
+def numpy_to_pil(im):
+
+    im = np.uint8(255*im)
+    im = pimage.fromarray(im).convert('L')
+    # print(im.mode)
+
+    return im
 
 def uniq(input):
     output = []
@@ -78,27 +86,31 @@ def model_segment(image, model_name, model_file):
 
 def binary_segment(image, sigma=0.1, image_type='dark_field', algo='bimodal'):
     """
-    takes a grayscale image and segments it into 2 classes (can be upgraded to be multiclass)
+    takes an image and segments it into 2 classes based on grayscaling (can be upgraded to be multiclass)
 
     """
-    # image = np.asarray(pimage.open(ff).convert('L')) / 255
+        # use pil conversion to get to grayscale
+    image = numpy_to_pil(image)
+
+    if image.mode != 'L':
+        # im_pil is usually 'RGB' with all 3 channels the same; binary_segment requires grayscale, but back-conversion to rgb at the end.
+        image = image.convert('L')
 
     image = skimage.filters.gaussian(
-        image, sigma=sigma)  #, multichannel=False, preserve_range=True)
+        np.asarray(image), sigma=sigma)  #, multichannel=False, preserve_range=True)
 
     if algo == 'bimodal':
         # apply threshold
         thresh = threshold_otsu(image)
         # print('thresh bimodal')
-        print('thresh otsu: %f' % thresh)
+        # print('thresh otsu: %f' % thresh)
 
     elif algo == 'local':
         bsize = 35  # int(np.amin(image.shape) / 2) + 1
         thresh = threshold_local(image, bsize)
-        print('thresh local: %f' % thresh)
+        # print('thresh local: %f' % thresh)
 
-
-# remove artifacts connected to image border
+    # remove artifacts connected to image border
     if image_type == 'bright_field':
         bgl = 1
     elif image_type == 'dark_field':
@@ -114,16 +126,33 @@ def binary_segment(image, sigma=0.1, image_type='dark_field', algo='bimodal'):
     image_label_overlay = label2rgb(label_image, image=image, bg_label=0)
 
     regionlist = regionprops(label_image)
-    regionlist = sorted(
-        regionlist, key=lambda x: (x.centroid[0], (x.centroid[1])))
+    regionlist = sorted(regionlist, key=lambda x: (x.centroid[0], (x.centroid[1])))
+
+    image_label_overlay = pimage.fromarray(skimage.util.img_as_ubyte(image_label_overlay), 'RGB')
 
     return regionlist, label_image, image_label_overlay
 
 
-def watershed_segment(image, thresh):
-    image = np.array(image.convert('P'))  # 8-bit pixels
+def watershed_segment(image, thresh, sigma):
 
-    image = skimage.filters.gaussian(image, sigma=0.1, )
+    """Use watershed algorithm to segment images.
+
+    Arguments
+    ---------
+    image: np.array
+    thresh: float
+
+    Returns
+    -------
+    regionlist: list. list of instance segmented regions
+    label_image: np.array. labeled image mask of regions
+    image_label_overlay: np.array. image with segmeneted regions overlaid
+
+    """
+
+    # image = np.array(image.convert('P'))  # 8-bit pixels
+    image = img_as_ubyte(image)
+    image = skimage.filters.gaussian(image, sigma=0.05)
 
     denoised = rank.median(image, disk(5))
     # find continuous region (low gradient -
