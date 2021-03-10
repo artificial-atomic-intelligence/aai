@@ -151,8 +151,16 @@ def watershed_segment(image, thresh, sigma):
     """
 
     # image = np.array(image.convert('P'))  # 8-bit pixels
+    
+    if len(np.shape(image)) > 2:
+        # im_pil is usually 'RGB' with all 3 channels the same; binary_segment requires grayscale, but back-conversion to rgb at the end.
+        image = numpy_to_pil(image)
+        image = image.convert('L')
+
     image = img_as_ubyte(image)
     image = skimage.filters.gaussian(image, sigma=0.05)
+
+    print(image.shape)
 
     denoised = rank.median(image, disk(5))
     # find continuous region (low gradient -
