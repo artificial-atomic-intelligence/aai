@@ -14,7 +14,7 @@ import config
 
 from aai.feat.material import featurize_composition
 from aai.feat.molecule import featurize_molecule, pubchem_cid_to_mol, pdb_id_to_mol
-from aai.segment.image_segment import model_segment, binary_segment, watershed_segment
+from aai.segment.image_segment import model_segment, binary_segment, watershed_segment, autoencoder_postprocess
 from aai.segment.utils import normalize_im, blur_im
 
 from aai.aws.s3 import *
@@ -91,16 +91,36 @@ def get_tem_image(seg_method: str, dest: S3dest):
 
     if seg_method == "Watershed":
         
-        regionlist, label_image, im_overlay = watershed_segment(im_array, 0.05, 0.01)
+        regionlist, label_image, im_overlay = watershed_segment(im_array, sigma = 0.01)
 
     elif seg_method == "Binary":
 
         regionlist, label_image, im_overlay = binary_segment(normalize_im(im_array), sigma=0.01)
                 
     elif seg_method == "Autoencoder":
-        im_array = normalize_im(im_array)
-        pass
-    
+
+        im_array = normalize_im(im_array, (512,512))
+        im_input = im_array.reshape(-1, 1, im_array.shape[0], im_array.shape[1])
+        sagemaker_client = boto3.client('sagemaker-runtime')
+
+        response = sagemaker_client.invoke_endpoint(
+            EndpointName='tem-np-segment',
+            ContentType="application/json",
+            Accept="application/json",
+            Body=json.dumps(im_input.tolist())
+        )
+        body_str = response['Body'].read().decode("utf-8")
+        im_overlay = np.array(json.loads(body_str)).squeeze()
+        # print(im_overlay.max())
+        # print(im_overlay.min())
+
+        regionlist, label_image, im_overlay = autoencoder_postprocess(im_overlay) # normalize_im(im_overlay)
+        print([i['area'] for i in regionlist])
+        # print(regionlist[0]['area'])
+
+    else:
+        im_overlay = im_array
+
     # normalize segmented image
     im_overlay = normalize_im(im_overlay)
     im_array = normalize_im(im_array)
