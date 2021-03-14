@@ -1,6 +1,6 @@
 """Generate physical and chemical descriptors of inorganic materials."""
 from matminer.featurizers.composition import ElementProperty
-from pymatgen import Composition
+from pymatgen import *
 
 from typing import List, Tuple
 
