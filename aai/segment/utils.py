@@ -48,7 +48,7 @@ def crop_image(image, step_size: int = 512):
     return cropped_images
 
 
-def normalize_im(image):
+def normalize_im(image, shape=None):
     """Scale and normalize pixel values to be between 0 and 1.
 
     Arguments
@@ -60,6 +60,8 @@ def normalize_im(image):
     normed: np.array
 
     """
+    if shape is not None:
+        image = transform.resize(image, shape, order=3)
 
     scaled = (image - np.mean(image) / np.std(image))
     normed = (scaled - np.min(scaled)) / (np.max(scaled) - np.min(scaled))

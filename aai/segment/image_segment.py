@@ -30,6 +30,7 @@ from skimage.measure import label, regionprops
 from skimage.morphology import closing, square, disk
 from skimage.color import label2rgb
 from skimage.util import img_as_ubyte
+from skimage.feature import peak_local_max
 
 from PIL import Image as pimage
 from PIL import ImageFile
@@ -133,7 +134,7 @@ def binary_segment(image, sigma=0.1, image_type='dark_field', algo='bimodal'):
     return regionlist, label_image, image_label_overlay
 
 
-def watershed_segment(image, thresh, sigma):
+def watershed_segment(image, sigma):
 
     """Use watershed algorithm to segment images.
 
@@ -158,24 +159,16 @@ def watershed_segment(image, thresh, sigma):
         image = image.convert('L')
 
     image = img_as_ubyte(image)
-    image = skimage.filters.gaussian(image, sigma=0.05)
+    image = skimage.filters.gaussian(image, sigma=sigma)
 
-    print(image.shape)
+    thresh = threshold_otsu(image)
+    bw = closing(image < thresh)
+    
+    D = ndi.distance_transform_edt(bw)
+    localMax = peak_local_max(D, indices=False, min_distance=20, labels=bw, footprint=np.ones((3, 3)))
+    markers = label(localMax)
 
-    denoised = rank.median(image, disk(5))
-    # find continuous region (low gradient -
-    # where less than 10 for this image) --> markers
-    # disk(5) is used here to get a more smooth image
-    # plt.imshow(denoised, cmap=plt.cm.gray)
-    # plt.show()
-    markers = rank.gradient(denoised, disk(5)) < thresh
-    markers = ndi.label(markers)[0]
-
-    # local gradient (disk(2) is used to keep edges thin)
-    gradient = rank.gradient(denoised, disk(2))
-
-    # process the watershed
-    label_image = watershed(gradient, markers)
+    label_image = watershed(-D, markers, mask=bw)
 
     image_label_overlay = label2rgb(label_image, image=image, bg_label=0)
 
@@ -186,10 +179,33 @@ def watershed_segment(image, thresh, sigma):
     return regionlist, label_image, image_label_overlay
 
 
-def segment_main(image_data):
-    pass
-    return
+def autoencoder_postprocess(image):
 
+    '''
+    Arguments
+    ---------
+    image: np.array
+
+    generates region properties for autoencoder-processed images
+
+    Returns
+    -------
+    regionlist: list. list of instance segmented regions
+    label_image: np.array. labeled image mask of regions
+    image_label_overlay: np.array. image with segmeneted regions overlaid
+
+    '''
+
+    thresh = threshold_otsu(image)
+    bw = closing(image < thresh)
+    cleared = clear_border(bw)
+    label_image = img_as_ubyte(label(cleared))
+    image_label_overlay = label2rgb(label_image, image=image, bg_label=0)
+
+    regionlist = regionprops(label_image)
+    regionlist = sorted(regionlist, key=lambda x: (x.centroid[0], (x.centroid[1])))
+
+    return regionlist, label_image, image_label_overlay
 
 if __name__ == '__main__':
 
