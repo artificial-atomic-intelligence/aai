@@ -85,17 +85,17 @@ def get_tem_image(seg_method: str, dest: S3dest):
     image_bytes = download_from_s3_to_memory(dest.bucket, dest.objectname)
     temdata = TEMDataset(filenames=[dest.objectname], filestreams=[image_bytes])
     im_array, im_meta = temdata[0] # single image dataset
-
+    saveprops = ['area', 'bbox', 'centroid', 'equivalent_diameter', 'label', 'perimeter', 'eccentricity', 'orientation']
     # this is necessary for the binary, watershed algorithms to work well given current hyperparams.
     im_array = im_array.astype(np.uint16)
 
     if seg_method == "Watershed":
         
-        regionlist, label_image, im_overlay = watershed_segment(im_array, sigma = 0.01)
+        regiontable, label_image, im_overlay = watershed_segment(im_array, saveprops, sigma = 0.01)
 
     elif seg_method == "Binary":
 
-        regionlist, label_image, im_overlay = binary_segment(normalize_im(im_array), sigma=0.01)
+        regiontable, label_image, im_overlay = binary_segment(normalize_im(im_array), saveprops, sigma=0.01)
                 
     elif seg_method == "Autoencoder":
 
@@ -114,13 +114,14 @@ def get_tem_image(seg_method: str, dest: S3dest):
         # print(im_overlay.max())
         # print(im_overlay.min())
 
-        regionlist, label_image, im_overlay = autoencoder_postprocess(im_overlay) # normalize_im(im_overlay)
-        print([i['area'] for i in regionlist])
+        regiontable, label_image, im_overlay = autoencoder_postprocess(im_overlay, saveprops) # normalize_im(im_overlay)
+        # print([i['area'] for i in regionlist])
         # print(regionlist[0]['area'])
 
     else:
         im_overlay = im_array
 
+    print(regiontable)
     # normalize segmented image
     im_overlay = normalize_im(im_overlay)
     im_array = normalize_im(im_array)

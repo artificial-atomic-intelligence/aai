@@ -26,7 +26,7 @@ import skimage.measure
 from skimage.transform import resize
 from skimage.filters import threshold_otsu, threshold_local, rank
 from skimage.segmentation import clear_border, watershed
-from skimage.measure import label, regionprops
+from skimage.measure import label, regionprops, regionprops_table
 from skimage.morphology import closing, square, disk
 from skimage.color import label2rgb
 from skimage.util import img_as_ubyte
@@ -85,7 +85,7 @@ def model_segment(image, model_name, model_file):
     return contour
 
 
-def binary_segment(image, sigma=0.1, image_type='dark_field', algo='bimodal'):
+def binary_segment(image, saveprops, sigma=0.1, image_type='dark_field', algo='bimodal'):
     """
     takes an image and segments it into 2 classes based on grayscaling (can be upgraded to be multiclass)
 
@@ -126,15 +126,19 @@ def binary_segment(image, sigma=0.1, image_type='dark_field', algo='bimodal'):
 
     image_label_overlay = label2rgb(label_image, image=image, bg_label=0)
 
-    regionlist = regionprops(label_image)
-    regionlist = sorted(regionlist, key=lambda x: (x.centroid[0], (x.centroid[1])))
+    ## lazy particle property evaluator
+    # regionlist = regionprops(label_image)
+    # regionlist = sorted(regionlist, key=lambda x: (x.centroid[0], (x.centroid[1])))
+
+    regiontable = pd.DataFrame(regionprops_table(label_image, properties = saveprops))
+    regiontable = regiontable.loc[regiontable['area'] > 1].reset_index(drop=True)
 
     image_label_overlay = pimage.fromarray(skimage.util.img_as_ubyte(image_label_overlay), 'RGB')
 
-    return regionlist, label_image, image_label_overlay
+    return regiontable, label_image, image_label_overlay
 
 
-def watershed_segment(image, sigma):
+def watershed_segment(image, saveprops, sigma):
 
     """Use watershed algorithm to segment images.
 
@@ -172,14 +176,19 @@ def watershed_segment(image, sigma):
 
     image_label_overlay = label2rgb(label_image, image=image, bg_label=0)
 
-    regionlist = regionprops(label_image)
-    regionlist = sorted(
-        regionlist, key=lambda x: (x.centroid[0], (x.centroid[1])))
+    ## lazy evaluator of particle properties
+    # regionlist = regionprops(label_image)
+    # regionlist = sorted(
+    #     regionlist, key=lambda x: (x.centroid[0], (x.centroid[1])))
 
-    return regionlist, label_image, image_label_overlay
+    regiontable = pd.DataFrame(regionprops_table(label_image, properties = saveprops))
+    # remove single pixel regions
+    regiontable = regiontable.loc[regiontable['area'] > 1].reset_index(drop=True)
+
+    return regiontable, label_image, image_label_overlay
 
 
-def autoencoder_postprocess(image):
+def autoencoder_postprocess(image, saveprops):
 
     '''
     Arguments
@@ -202,10 +211,14 @@ def autoencoder_postprocess(image):
     label_image = img_as_ubyte(label(cleared))
     image_label_overlay = label2rgb(label_image, image=image, bg_label=0)
 
-    regionlist = regionprops(label_image)
-    regionlist = sorted(regionlist, key=lambda x: (x.centroid[0], (x.centroid[1])))
+    # regionlist = regionprops(label_image)
+    # regionlist = sorted(regionlist, key=lambda x: (x.centroid[0], (x.centroid[1])))
+    
+    regiontable = pd.DataFrame(regionprops_table(label_image, properties = saveprops))
+    regiontable = regiontable.loc[regiontable['area'] > 1].reset_index(drop=True)
+    # print(regiontable)
 
-    return regionlist, label_image, image_label_overlay
+    return regiontable, label_image, image_label_overlay
 
 if __name__ == '__main__':
 

@@ -5,6 +5,7 @@ import skimage
 from skimage import filters, transform, util
 import os
 
+
 def fourfold_rotate(image):
     """Rotate image by 90, 180, and 270 degrees.
 
@@ -84,3 +85,4 @@ def blur_im(image, sigma: int = 3):
     """
 
     return filters.gaussian(image, sigma, multichannel=True)
+
