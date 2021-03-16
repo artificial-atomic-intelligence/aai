@@ -9,6 +9,7 @@ from pydantic import BaseModel
 import numpy as np
 from PIL import Image
 import json
+import pandas as pd
 
 import config
 
@@ -18,7 +19,10 @@ from aai.segment.image_segment import model_segment, binary_segment, watershed_s
 from aai.segment.utils import normalize_im, blur_im
 
 from aai.aws.s3 import *
+from aai.aws.dynamo import *
 from aai.io.tem import TEMDataset
+
+from datetime import datetime, time
 
 app = FastAPI(
     title="AtomicAI API",
@@ -29,6 +33,11 @@ app = FastAPI(
 class S3dest(BaseModel):
     bucket: str
     objectname: str
+    user_name: str
+    projectname: str
+    image_id: str
+    dynamodb_table_name: str
+
 
 @app.get("/")
 def read_root():
@@ -80,6 +89,9 @@ def upload(destination: str,  file: UploadFile = File(...)): # destination: str 
 @app.post("/get_tem_image/{seg_method}")
 def get_tem_image(seg_method: str, dest: S3dest):
     # TODO: implement autoencoder inference. point to model location on S3. generalize for multiple files 
+
+    time_a = datetime.now()
+    print(time_a)
     
     #image_bytes is BytesIO object
     image_bytes = download_from_s3_to_memory(dest.bucket, dest.objectname)
@@ -121,7 +133,27 @@ def get_tem_image(seg_method: str, dest: S3dest):
     else:
         im_overlay = im_array
 
-    print(regiontable)
+    # print(regiontable)
+    time_b = datetime.now()
+    print(time_b - time_a)
+    # DynamoDB
+    # prepare a json type "item" for uploading to DynamoDB
+    item = {
+        "user_name": dest.user_name,
+        "image_id": dest.image_id,
+        "objectname": dest.objectname,
+        "bucket": dest.bucket,
+        "projectname": dest.projectname,
+        "regiontable": regiontable.to_json(orient="split")
+    }
+
+    res = create_single_item(dest.dynamodb_table_name, item)
+    print(res) # return True if uploading successed
+
+    time_c = datetime.now()
+    print(time_c - time_b)
+
+    # print(type(regiontable))
     # normalize segmented image
     im_overlay = normalize_im(im_overlay)
     im_array = normalize_im(im_array)
@@ -135,7 +167,10 @@ def get_tem_image(seg_method: str, dest: S3dest):
 
     # original metadata from TEMDataset  # check for json compatibility  print([type(i)for i in im_meta.values()])
     meta_json = json.dumps(im_meta)
-   
+
+    time_d = datetime.now()
+    print(time_d - time_c)
+
     # name = f"/storage/{str(uuid.uuid4())}.png"
     return {"name": dest.objectname, "seg_image_json": seg_image_json, "image_json": image_json, "metadata": meta_json}
 
