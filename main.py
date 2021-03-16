@@ -133,7 +133,7 @@ def get_tem_image(seg_method: str, dest: S3dest):
     else:
         im_overlay = im_array
 
-    print(regiontable)
+    # print(regiontable)
     time_b = datetime.now()
     print(time_b - time_a)
     # DynamoDB
