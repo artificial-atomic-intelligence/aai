@@ -24,6 +24,8 @@ from aai.io.tem import TEMDataset
 
 from datetime import datetime, time
 
+from pprint import pprint
+
 app = FastAPI(
     title="AtomicAI API",
     description="""Visit port 8501 for the Streamlit interface.""",
@@ -133,7 +135,6 @@ def get_tem_image(seg_method: str, dest: S3dest):
     else:
         im_overlay = im_array
 
-    # print(regiontable)
     time_b = datetime.now()
     print(time_b - time_a)
     # DynamoDB
@@ -144,11 +145,17 @@ def get_tem_image(seg_method: str, dest: S3dest):
         "objectname": dest.objectname,
         "bucket": dest.bucket,
         "projectname": dest.projectname,
-        "regiontable": regiontable.to_json(orient="split")
+        "regiontable": regiontable.to_json(orient="split"),
+        "im_overlay": im_overlay
     }
 
     res = create_single_item(dest.dynamodb_table_name, item)
     print(res) # return True if uploading successed
+    key = {'user_name': dest.user_name,'image_id': dest.image_id}
+    res = get_item(dest.dynamodb_table_name, key)
+    regiontable_json = json.loads(json.dumps(res['regiontable']))
+    regiontable_df = pd.read_json(regiontable_json,orient="split")
+    # print(regiontable_df)
 
     time_c = datetime.now()
     print(time_c - time_b)
