@@ -151,11 +151,13 @@ def get_tem_image(seg_method: str, dest: S3dest):
 
     res = create_single_item(dest.dynamodb_table_name, item)
     print(res) # return True if uploading successed
+
+    # retrieve DynamoDB item back
     key = {'user_name': dest.user_name,'image_id': dest.image_id}
     res = get_item(dest.dynamodb_table_name, key)
     regiontable_json = json.loads(json.dumps(res['regiontable']))
     regiontable_df = pd.read_json(regiontable_json,orient="split")
-    # print(regiontable_df)
+    print(regiontable_df)
 
     time_c = datetime.now()
     print(time_c - time_b)
