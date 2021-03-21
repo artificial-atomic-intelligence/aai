@@ -39,6 +39,7 @@ class S3dest(BaseModel):
     projectname: str
     image_id: str
     dynamodb_table_name: str
+    backend_url: str
 
 
 @app.get("/")
@@ -91,9 +92,6 @@ def upload(destination: str,  file: UploadFile = File(...)): # destination: str 
 @app.post("/get_tem_image/{seg_method}")
 def get_tem_image(seg_method: str, dest: S3dest):
     # TODO: implement autoencoder inference. point to model location on S3. generalize for multiple files 
-
-    time_a = datetime.now()
-    print(time_a)
     
     #image_bytes is BytesIO object
     image_bytes = download_from_s3_to_memory(dest.bucket, dest.objectname)
@@ -106,10 +104,12 @@ def get_tem_image(seg_method: str, dest: S3dest):
     if seg_method == "Watershed":
         
         regiontable, label_image, im_overlay = watershed_segment(im_array, saveprops, sigma = 0.01)
+        flag = True
 
     elif seg_method == "Binary":
 
         regiontable, label_image, im_overlay = binary_segment(normalize_im(im_array), saveprops, sigma=0.01)
+        flag = True
                 
     elif seg_method == "Autoencoder":
 
@@ -131,33 +131,39 @@ def get_tem_image(seg_method: str, dest: S3dest):
         regiontable, label_image, im_overlay = autoencoder_postprocess(im_overlay, saveprops) # normalize_im(im_overlay)
         # print([i['area'] for i in regionlist])
         # print(regionlist[0]['area'])
+        flag = True
 
     else:
+        regiontable = 'None'
+        flag = False
         im_overlay = im_array
 
     time_b = datetime.now()
     print(time_b - time_a)
     # DynamoDB
     # prepare a json type "item" for uploading to DynamoDB
+
+    if flag:
+        regiontable = regiontable.to_json(orient="split")
+
     item = {
         "user_name": dest.user_name,
         "image_id": dest.image_id,
         "objectname": dest.objectname,
         "bucket": dest.bucket,
         "projectname": dest.projectname,
-        "regiontable": regiontable.to_json(orient="split"),
-        "im_overlay": im_overlay
+        "regiontable": regiontable,
     }
-
     res = create_single_item(dest.dynamodb_table_name, item)
     print(res) # return True if uploading successed
 
     # retrieve DynamoDB item back
     key = {'user_name': dest.user_name,'image_id': dest.image_id}
     res = get_item(dest.dynamodb_table_name, key)
-    regiontable_json = json.loads(json.dumps(res['regiontable']))
-    regiontable_df = pd.read_json(regiontable_json,orient="split")
-    print(regiontable_df)
+    if res['regiontable'] != 'None':
+        regiontable_json = json.loads(json.dumps(res['regiontable']))
+        regiontable_df = pd.read_json(regiontable_json,orient="split")
+        print(regiontable_df)
 
     time_c = datetime.now()
     print(time_c - time_b)
