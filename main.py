@@ -189,6 +189,50 @@ def get_tem_image(seg_method: str, dest: S3dest):
     # name = f"/storage/{str(uuid.uuid4())}.png"
     return {"name": dest.objectname, "seg_image_json": seg_image_json, "image_json": image_json, "metadata": meta_json}
 
+class signup(BaseModel):
+    dynamodb_table_name: str
+    user_name: str
+    passwd: str
+    company: str
+    first_name: str
+    last_name: str
+    email_addr: str
+    phone_num: str
+    
+
+@app.post("/signup")
+def sign_up(signup_info: signup):
+    item = {
+        'user_name': signup_info.user_name,
+        'passwd': signup_info.passwd,
+        'company': signup_info.company,
+        'first_name': signup_info.first_name,
+        'last_name': signup_info.last_name,
+        'email_addr': signup_info.email_addr,
+        'phone_num': signup_info.phone_num,
+        'exists': True,
+    }
+    res = create_single_item(signup_info.dynamodb_table_name, item)
+    print(res)
+
+    return res
+
+class login(BaseModel):
+    dynamodb_table_name: str
+    user_name: str
+    passwd: str
+
+@app.get("/login")
+def log_in(login_info: login):
+    key = {
+        'user_name': login_info.user_name,
+        'passwd': login_info.passwd
+    }
+    res = get_item(login_info.dynamodb_table_name, key)
+    print(res)
+
+    return res
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
